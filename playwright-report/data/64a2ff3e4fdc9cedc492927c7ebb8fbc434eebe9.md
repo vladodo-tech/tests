@@ -1,0 +1,134 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: ui/login.spec.js >> Авторизация >> TC-AUTH-006: Вход с невалидным форматом email
+- Location: tests/ui/login.spec.js:60:3
+
+# Error details
+
+```
+Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: true
+Received: false
+```
+
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - main [ref=e3]:
+    - link "Shop System" [ref=e7] [cursor=pointer]:
+      - /url: /
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - generic [ref=e12]: Вход в систему
+        - generic [ref=e13]: Введите ваш email и пароль для входа.
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - text: Email
+          - textbox "Email" [ref=e17]:
+            - /placeholder: user@example.com
+            - text: invalid-email-format
+        - generic [ref=e18]:
+          - text: Пароль
+          - textbox "Пароль" [ref=e19]:
+            - /placeholder: ••••••••
+            - text: user123
+        - button "Войти" [ref=e20] [cursor=pointer]
+        - generic [ref=e21]:
+          - text: Нет аккаунта?
+          - link "Зарегистрироваться" [ref=e22] [cursor=pointer]:
+            - /url: /register
+  - region "Notifications alt+T":
+    - list:
+      - listitem [ref=e23]:
+        - img [ref=e25]
+        - generic [ref=e28]: Неверный email или пароль
+```
+
+# Test source
+
+```ts
+  1  | const { test, expect } = require('@playwright/test');
+  2  | 
+  3  | const validUser = {
+  4  |   email: process.env.TEST_USER_EMAIL,
+  5  |   password: process.env.TEST_USER_PASSWORD,
+  6  | };
+  7  | 
+  8  | test.describe('Авторизация', () => {
+  9  |   
+  10 |   
+  11 |   test('TC-AUTH-001: Успешный вход с валидными данными', async ({ page }) => {
+  12 |     await page.goto('/login');
+  13 |     await page.waitForLoadState('networkidle');
+  14 | 
+  15 |     await page.locator('input[name="email"]').fill(validUser.email);
+  16 |     await page.locator('input[type="password"]').fill(validUser.password);
+  17 |     await page.locator('button[type="submit"]').click();
+  18 | 
+  19 |     await expect(page).toHaveURL(/^(?!.*login).*$/, { timeout: 10000 });
+  20 |   });
+  21 | 
+  22 | 
+  23 |   test('TC-AUTH-003: Вход с неверным паролем', async ({ page }) => {
+  24 |     await page.goto('/login');
+  25 |     await page.waitForLoadState('networkidle');
+  26 | 
+  27 |     await page.locator('input[name="email"]').fill(validUser.email);
+  28 |     await page.locator('input[type="password"]').fill('wrongpassword123');
+  29 |     await page.locator('button[type="submit"]').click();
+  30 | 
+  31 |     await expect(page.locator('text=/неверный|invalid|ошибка/i')).toBeVisible({ timeout: 5000 });
+  32 |     await expect(page).toHaveURL(/.*login/);
+  33 |   });
+  34 | 
+  35 |   test('TC-AUTH-004: Вход с несуществующим email', async ({ page }) => {
+  36 |     await page.goto('/login');
+  37 |     await page.waitForLoadState('networkidle');
+  38 | 
+  39 |     await page.locator('input[name="email"]').fill('nonexistent@example.com');
+  40 |     await page.locator('input[type="password"]').fill(validUser.password);
+  41 |     await page.locator('button[type="submit"]').click();
+  42 | 
+  43 |     await expect(page.locator('text=/неверный|invalid|не найден|not found/i')).toBeVisible({ timeout: 5000 });
+  44 |     await expect(page).toHaveURL(/.*login/);
+  45 |   });
+  46 | 
+  47 |   test('TC-AUTH-005: Вход с пустыми полями', async ({ page }) => {
+  48 |     await page.goto('/login');
+  49 |     await page.waitForLoadState('networkidle');
+  50 | 
+  51 |     await page.locator('button[type="submit"]').click();
+  52 | 
+  53 |     await expect(page).toHaveURL(/.*login/);
+  54 | 
+  55 |     const emailInput = page.locator('input[name="email"]');
+  56 |     const isInvalid = await emailInput.evaluate(el => !el.validity.valid);
+  57 |     expect(isInvalid).toBe(true);
+  58 |   });
+  59 | 
+  60 |   test('TC-AUTH-006: Вход с невалидным форматом email', async ({ page }) => {
+  61 |     await page.goto('/login');
+  62 |     await page.waitForLoadState('networkidle');
+  63 | 
+  64 |     await page.locator('input[name="email"]').fill('invalid-email-format');
+  65 |     await page.locator('input[type="password"]').fill(validUser.password);
+  66 |     await page.locator('button[type="submit"]').click();
+  67 | 
+  68 |     await expect(page).toHaveURL(/.*login/);
+  69 | 
+  70 |     const emailInput = page.locator('input[name="email"]');
+  71 |     const isInvalid = await emailInput.evaluate(el => !el.validity.valid);
+> 72 |     expect(isInvalid).toBe(true);
+     |                       ^ Error: expect(received).toBe(expected) // Object.is equality
+  73 |   });
+  74 | 
+  75 | });
+```

@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  e2e-tests:
+    build: .
+    container_name: playwright-auth-tests
+    volumes:
+      - ./playwright-report:/app/playwright-report
+      - ./test-results:/app/test-results
+    environment:
+      - CI=true
+      - BASE_URL=http://host.docker.internal:5173
+      - TEST_USER_EMAIL=user1@test.com
+      - TEST_USER_PASSWORD=user123
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
