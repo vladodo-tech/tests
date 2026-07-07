@@ -1,6 +1,9 @@
-node_modules
-playwright-report
-test-results
+# Playwright
+node_modules/
+/playwright-report/
+/test-results/
+
+# Docker
 Dockerfile
 docker-compose.yml
 .dockerignore
